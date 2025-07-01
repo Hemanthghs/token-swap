@@ -24,17 +24,16 @@ class SwapClient {
   provider: AnchorProvider;
   program: Program<SimpleSwap>;
   payer: Keypair;
-  liquidityProvider: Keypair; // User who provides liquidity
-  trader: Keypair; // User who performs swaps
+  liquidityProvider: Keypair;
+  trader: Keypair;
   mintA: PublicKey;
   mintB: PublicKey;
   mintAuthority: Keypair;
 
-  // Add decimals constant for better management
-  readonly TOKEN_DECIMALS = 6; // Reduce from 9 to 6 to prevent overflow
+  readonly TOKEN_DECIMALS = 6;
 
   constructor() {
-    // Connect to devnet
+    // Connect to local testnet
     this.connection = new Connection("http://localhost:8899", "confirmed");
 
     // Create keypairs
@@ -50,23 +49,20 @@ class SwapClient {
     this.program = new Program<SimpleSwap>(simpleSwapIdl, this.provider);
   }
 
-  // Helper function to convert tokens to lamports for Anchor (returns BN)
   private tokenToLamports(amount: number): BN {
     return new BN(amount * Math.pow(10, this.TOKEN_DECIMALS));
   }
 
-  // Helper function to convert tokens to lamports for SPL Token (returns number)
   private tokenToLamportsNumber(amount: number): number {
     return amount * Math.pow(10, this.TOKEN_DECIMALS);
   }
 
-  // Helper function to convert lamports to tokens
   private lamportsToToken(lamports: BN | bigint | number): number {
     return Number(lamports) / Math.pow(10, this.TOKEN_DECIMALS);
   }
 
   async initialize() {
-    console.log("🚀 Initializing swap demo with separate users...\n");
+    console.log("🚀 Initializing...\n");
 
     // Airdrop SOL to accounts
     await this.airdropSol(this.payer.publicKey, 2);
@@ -99,22 +95,22 @@ class SwapClient {
   async createTokenMints() {
     console.log("🪙 Creating token mints...");
 
-    // Create Token A with reduced decimals
+    // Create Token A
     this.mintA = await createMint(
       this.connection,
       this.payer,
       this.mintAuthority.publicKey,
       null,
-      this.TOKEN_DECIMALS // Use consistent decimals
+      this.TOKEN_DECIMALS
     );
 
-    // Create Token B with reduced decimals
+    // Create Token B
     this.mintB = await createMint(
       this.connection,
       this.payer,
       this.mintAuthority.publicKey,
       null,
-      this.TOKEN_DECIMALS // Use consistent decimals
+      this.TOKEN_DECIMALS
     );
 
     console.log(`Token A Mint: ${this.mintA.toBase58()}`);
@@ -139,8 +135,8 @@ class SwapClient {
       this.liquidityProvider.publicKey
     );
 
-    // Mint tokens to liquidity provider (they need both tokens to provide liquidity)
-    const mintAmount = this.tokenToLamportsNumber(1000); // 1000 tokens each
+    // Mint tokens to liquidity provider
+    const mintAmount = this.tokenToLamportsNumber(1000);
 
     await mintTo(
       this.connection,
@@ -185,8 +181,8 @@ class SwapClient {
       this.trader.publicKey
     );
 
-    // Mint only Token A to trader (they want to swap A for B)
-    const mintAmount = this.tokenToLamportsNumber(100); // 100 Token A only
+    // Mint only Token A to trader
+    const mintAmount = this.tokenToLamportsNumber(100);
 
     await mintTo(
       this.connection,
@@ -197,16 +193,13 @@ class SwapClient {
       mintAmount
     );
 
-    // Trader starts with 0 Token B (this is what they want to get)
     console.log(`Trader Token A Account: ${traderTokenA.toBase58()}`);
     console.log(`Trader Token B Account: ${traderTokenB.toBase58()}`);
-    console.log(
-      "💰 Minted 100 Token A to Trader (0 Token B - they'll get this from swapping)\n"
-    );
+    console.log("💰 Minted 100 Token A to Trader\n");
   }
 
   async initializePool() {
-    console.log("🏊 Initializing swap pool...");
+    console.log("Initializing swap pool...");
 
     // Derive PDAs
     const [poolPda] = PublicKey.findProgramAddressSync(
@@ -339,7 +332,6 @@ class SwapClient {
       this.trader.publicKey
     );
 
-    // Show trader balances before swap
     await this.showUserBalances(
       traderTokenA,
       traderTokenB,
@@ -347,7 +339,7 @@ class SwapClient {
       "Trader"
     );
 
-    // Calculate expected output for verification
+    // Calculate expected output
     const expectedOutput = await this.calculateSwapOutput(
       vaultA,
       vaultB,
@@ -377,7 +369,6 @@ class SwapClient {
 
       console.log(`✅ Swap completed! Transaction: ${tx}`);
 
-      // Show balances after swap
       await this.showUserBalances(
         traderTokenA,
         traderTokenB,
@@ -455,7 +446,7 @@ class SwapClient {
 
   async demonstrateSwap() {
     try {
-      console.log("🎭 DEMO SCENARIO:");
+      
       console.log(
         "👤 Liquidity Provider: Has both Token A & B, will provide liquidity"
       );
@@ -482,17 +473,16 @@ class SwapClient {
       console.log("⏳ Waiting 2 seconds before second swap...\n");
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Trader swaps some Token B back for Token A (if they have any B now)
+      // Trader swaps some Token B back for Token A
       await this.swap(poolPda, vaultA, vaultB, 3, 1, false);
 
       console.log("🎉 Demo completed successfully!");
     } catch (error) {
-      console.error("💥 Demo failed:", error);
+      console.error("Demo failed:", error);
     }
   }
 }
 
-// Run the demo
 async function main() {
   const client = new SwapClient();
   await client.demonstrateSwap();
