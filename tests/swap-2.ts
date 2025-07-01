@@ -1,12 +1,12 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Swap2 } from "../target/types/swap_2";
+import { SimpleSwap } from "../target/types/simple_swap";
 
 describe("swap-2", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.swap2 as Program<Swap2>;
+  const program = anchor.workspace.swap2 as Program<any>;
 
   it("Is initialized!", async () => {
     // Add your test here.
