@@ -55,6 +55,28 @@ Before you begin, ensure you have the following installed:
    ```
 
 
+## Building the Program
+
+1. **Build the program:**
+   ```bash
+   anchor build
+   ```
+
+2. **Get the program ID:**
+   ```bash
+   anchor keys list
+   ```
+
+3. **Update the program ID in your code: (*Important!*)**
+   - Update `declare_id!()` in `programs/swap-2/src/lib.rs`
+   - Update `Anchor.toml` with the correct program ID
+
+4. **Rebuild after updating program ID:**
+   ```bash
+   anchor build
+   ```
+
+
 ## Deployment
 
 ### Deploy to Local Testnet
